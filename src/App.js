@@ -1,10 +1,18 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import Globe from 'react-globe.gl';
+import Input from './components/Input';
+import { getColour } from './helper';
+
+const countryData = require("./data/country_data.json").features 
 
 function App() {
-  const size = 300;
+
+  const [correctAnswer, setCorrectAnswer] = useState({});
+  const [guesses, setGuesses] = useState([])
+
+  const size = 600;
   const data = [{
     "type": "Feature",
     "geometry": {
@@ -318,12 +326,23 @@ function App() {
   }]
 
   function getLabel(country) {
-    const label = `India`;
+    const name = country.properties.ADMIN;
+    const label = `<b class="tooltip">${name}</b>`;
     return label;
   }
 
   function polygonColour(country) {
-    return "yellow"
+
+
+    // return "yellow"
+    return getColour(
+      country,
+      correctAnswer
+    );
+
+    // const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'brown'];
+    // const randomIndex = Math.floor(Math.random() * colors.length);
+    // return colors[randomIndex];
   }
 
   function polygonSideColor(country) {
@@ -338,26 +357,48 @@ function App() {
   const globeEl = useRef();
 
   useEffect(() => {
+    const controls = globeEl.current.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1;
+    setTimeout(() => {
+      globeEl.current.pointOfView({ lat: 0, lng: 0, altitude: 1.6 });
+    }, 400);
+  }, [globeEl]);
+
+  useEffect(() => {
     if (globeEl.current) {
       // Disable zooming
       globeEl.current.controls().enableZoom = false;
     }
   }, []);
 
+
+  useEffect(()=>{
+    const answer = countryData[Math.floor(Math.random() * countryData.length)];
+    setCorrectAnswer(answer)
+  }, [])
+
+
+  console.log("Correct answer: ", correctAnswer?.properties?.NAME_EN)
+  console.log(guesses)
+
   return (
     <div className="App">
+
+      <Input guesses={guesses} setGuesses={setGuesses} correctAnswer={correctAnswer}/>
       <div 
       className="globe"
       >
       <Globe
        ref={globeEl}
       globeImageUrl="//unpkg.com/three-globe/example/img/earth-day.jpg"
-      backgroundColor="#000"
-      polygonsData={data}
+      backgroundColor="#00000000"
+      polygonsData={guesses}
       polygonLabel={getLabel}
       polygonCapColor={polygonColour}
       polygonSideColor={polygonSideColor}
       polygonAltitude={getAltitude}
+      polygonStrokeColor={() => 'black'}
       height={size}
       width={size}
       enableZoom={false}
