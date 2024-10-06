@@ -15,26 +15,33 @@ function App() {
   const [correctAnswer, setCorrectAnswer] = useState({});
   const [guesses, setGuesses] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [error, setError] = useState("");
+  const [currentGuess, setCurrentGuess] = useState("");
+  const [win, setWin] = useState(false);
   
 
   const size = 600;
 
   const startNewGame = () => {
-    // Reset guesses
-    setGuesses([]);
-    
-    // Select a new correct answer
-    const filteredCountries = countryData.filter(country =>
+    resetGameState(); // Reset the states for a new game
+    const filteredCountries = countryData.filter((country) =>
       famousCountries.includes(country.properties.NAME_LONG)
     );
     if (filteredCountries.length > 0) {
       const newAnswer = filteredCountries[Math.floor(Math.random() * filteredCountries.length)];
       setCorrectAnswer(newAnswer);
     }
-
-    // Close the modal
     setIsModalOpen(false);
   };
+
+  const resetGameState = () => {
+    setError("");
+    setCurrentGuess("");
+    setWin(false);
+    setGuesses([]);
+  };
+
 
   function getLabel(country) {
     const name = country.properties.ADMIN;
@@ -126,7 +133,16 @@ function App() {
   return (
     <div className="App">
 
-      <Input guesses={guesses} setGuesses={setGuesses} correctAnswer={correctAnswer} onWin={toggleModal}/>
+      <Input guesses={guesses}
+        setGuesses={setGuesses}
+        correctAnswer={correctAnswer}
+        onWin={toggleModal}
+        error={error}
+        setError={setError}
+        currentGuess={currentGuess}
+        setCurrentGuess={setCurrentGuess}
+        win={win}
+        setWin={setWin}/>
       <div 
       className="globe"
       >

@@ -5,11 +5,7 @@ import * as turf from "@turf/turf";
 const countryData = require("../data/country_data.json").features 
 
 
-const Input = ({guesses, setGuesses, correctAnswer, onWin}) => {
-
-  const [error, setError] = useState("");
-  const [currentGuess, setCurrentGuess] = useState("");  
-  const [win, setWin] = useState("")
+const Input = ({guesses, setGuesses, correctAnswer, onWin, error, setError, currentGuess, setCurrentGuess, win, setWin}) => {
 
   const ref = useRef(null);
   
