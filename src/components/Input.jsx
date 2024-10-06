@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { polygonDistance } from '../helper';
 import UserFeedback from './UserFeedback';
+import * as turf from "@turf/turf";
 const countryData = require("../data/country_data.json").features 
 
 
-const Input = ({guesses, setGuesses, correctAnswer}) => {
+const Input = ({guesses, setGuesses, correctAnswer, onWin}) => {
 
   const [error, setError] = useState("");
   const [currentGuess, setCurrentGuess] = useState("");  
@@ -37,10 +38,16 @@ const Input = ({guesses, setGuesses, correctAnswer}) => {
   const addGuess = (e) => {
     e.preventDefault();
     const sanitizedGuess = currentGuess.trim().toLowerCase()
-    const guessCountry = findCountry(sanitizedGuess, countryData);
+    const alreadyGuessed = findCountry(sanitizedGuess, guesses);
     setCurrentGuess("");
+    if(alreadyGuessed){
+      setError("You've already guessed that country!")
+      ref.current?.select();
+      return;
+    }
+    const guessCountry = findCountry(sanitizedGuess, countryData);
     if (!guessCountry) {
-        setError("Country not found");
+        setError("You've enterted an invalid country. Please try again!");
         ref.current?.select();
         return;
     }
@@ -50,8 +57,21 @@ const Input = ({guesses, setGuesses, correctAnswer}) => {
           correctAnswer
         );
         const answerName = correctAnswer.properties.NAME;
+
+        const isAdjacent = turf.booleanTouches(correctAnswer.geometry, guessCountry.geometry);
+
         if (guessCountry.properties.NAME === answerName) {
             setWin(true);
+            setTimeout(onWin, 1500);
+        }else if (isAdjacent) {
+          // Set adjacent flag if the guess is adjacent to the correct answer
+          guessCountry["adjacent"] = true;
+        }
+        else if (guesses.length > 0) {
+          // Compare the proximity with the previous guess
+          const lastGuess = guesses[guesses.length - 1];
+          const warmer = guessCountry.proximity < lastGuess.proximity;
+          guessCountry["warmer"] = warmer;
         }
     }
     setGuesses([...guesses, guessCountry]);
@@ -62,10 +82,10 @@ const Input = ({guesses, setGuesses, correctAnswer}) => {
   return (
    <>
     <form onSubmit={addGuess} className='form'>
-        <input className='input' type="text" ref={ref} value={currentGuess} onChange={(e) => setCurrentGuess(e.target.value)}/>
-        <button className='button'>Submit</button>
+        <input className='input' type="text" ref={ref} value={currentGuess} onChange={(e) => setCurrentGuess(e.target.value)} disabled={win}/>
+        <button className='button' disabled={win}>Submit</button>
     </form>
-    <UserFeedback win={win}/>
+    <UserFeedback win={win} error={error} guesses={guesses}/>
    </>
   )
 }
